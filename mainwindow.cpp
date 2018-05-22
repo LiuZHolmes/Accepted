@@ -6,6 +6,14 @@
 #include "QtDebug"
 #include "QCloseEvent"
 #include "qfile.h"
+const QString FilePathStartFlag = "[FilePath_Start]";
+const QString FilePathEndFlag = "[FilePath_End]";
+const QString StandardOutputStartFlag = "[StandardOutput_Start]";
+const QString StandardOutputEndFlag = "[StandardOutput_End]";
+const QString InputStartFlag = "[Input_Start]";
+const QString InputEndFlag = "[Inut_End]";
+const QString TimeStartFlag = "[Time_Start]";
+const QString TimeEndFlag = "[Time_End]";
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -18,9 +26,35 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug()<<"Can't open the file!"<<endl;
     }
     QTextStream in(&file);
-    while( !in.atEnd()){
+    QString content;
+    while( !in.atEnd())
+    {
         QString line = in.readLine();
-        ui->lineEdit_FilePath->setText(line);
+        if(line == FilePathStartFlag || line == StandardOutputStartFlag || line == InputStartFlag || line == TimeStartFlag)
+        {
+           continue;
+        }
+        else if(line == FilePathEndFlag)
+        {
+            ui->lineEdit_FilePath->setText(content);
+            content = "";
+        }
+        else if(line == StandardOutputEndFlag)
+        {
+            ui->textEdit_StandardOutput->setText(content);
+            content = "";
+        }
+        else if(line == InputEndFlag)
+        {
+            ui->textEdit_Input->setText(content);
+            content = "";
+        }
+        else if(line == TimeEndFlag)
+        {
+            ui->lineEdit_time->setText(content);
+            content = "";
+        }
+        else content = content == "" ? line : content + '\n' + line;
     }
 }
 
@@ -125,6 +159,22 @@ void MainWindow::closeEvent(QCloseEvent *event)
         qDebug()<<"Can't open the file!"<<endl;
     }
     QTextStream out(&file);
+    // 文件路径
+    out << FilePathStartFlag << endl;
     out << ui->lineEdit_FilePath->text() << endl;
+    out << FilePathEndFlag << endl;
+    // 标准输出
+    out << StandardOutputStartFlag << endl;
+    out << ui->textEdit_StandardOutput->toPlainText() << endl;
+    out << StandardOutputEndFlag << endl;
+    // 输入
+    out << InputStartFlag << endl;
+    out << ui->textEdit_Input->toPlainText() << endl;
+    out << InputEndFlag << endl;
+    // 运行时间
+    out << TimeStartFlag << endl;
+    out << ui->lineEdit_time->text() << endl;
+    out << TimeEndFlag << endl;
+
     qDebug() << "close" << endl;
 }
